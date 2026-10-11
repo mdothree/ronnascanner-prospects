@@ -30,12 +30,12 @@ async function runResearch(prospect) {
     const res = await apiFetch("/api/prospects/research", { company: prospect, person: document.getElementById("person-input")
     });
     const data = await res.json();
-    profile = data.profile || mockProfile(prospect);
+    profile = data.profile || null;
   } catch {
-    profile = mockProfile(prospect);
+    profile = null;
   }
 
-  renderProfile(profile);
+  if (profile) renderProfile(profile); else showUnavailable();
   document.querySelector(".btn-text").classList.remove("hidden");
   document.querySelector(".btn-loader").classList.add("hidden");
   document.getElementById("btn-research").disabled = false;
@@ -105,20 +105,12 @@ async function loadHistory() {
     : "<p class='empty-state'>No saved profiles yet.</p>";
 }
 
-function mockProfile(name) {
-  return {
-    name, tagline: "Building the future of payments",
-    industry: "FinTech / Payments", founded: "2010", employees: "8,000+",
-    revenue: "$3B+ ARR", location: "San Francisco, CA",
-    website: name.toLowerCase().replace(/ /g,"") + ".com",
-    fundingStage: "Series H", totalFunding: "$2.2B", lastRound: "Series H, $600M",
-    tags: ["SaaS", "B2B", "API-first", "Enterprise"],
-    techStack: ["React", "Ruby on Rails", "AWS", "Stripe", "Salesforce", "Intercom"],
-    signals: [
-      "📈 Recently raised $600M Series H",
-      "🏢 Opened new office in Dublin, Ireland",
-      "📣 Launched new product line for SMBs",
-      "👥 Hiring 200+ engineers this quarter"
-    ]
-  };
+// RONNA-MOCK-FALLBACK: never fabricate results when the scanner API is unavailable.
+function showUnavailable() {
+  const panel = document.getElementById("results-panel") || document.getElementById("results-section");
+  if (panel) {
+    panel.classList.remove("hidden");
+    panel.innerHTML = '<div class="empty-state" role="status"><p><strong>The scanner service is unavailable right now.</strong></p><p>No results were generated. Please try again later.</p></div>';
+  }
+  toast.error("Scanner service unavailable. No results were generated.");
 }
