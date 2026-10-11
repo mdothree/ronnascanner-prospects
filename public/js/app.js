@@ -16,7 +16,7 @@ initRonna({ usageAction: "researches" }).then(user => {
 
 let profile = null;
 document.getElementById("btn-research").addEventListener("click", () => {
-  const prospect = document.getElementById("prospect-input").value.trim();
+  const prospect = document.getElementById("filter-company").value.trim();
   if (!prospect) return toast.warning("Enter a company name or domain.");
   gate("researches", () => runResearch(prospect), () => {});
 });
@@ -27,10 +27,12 @@ async function runResearch(prospect) {
   document.getElementById("btn-research").disabled = true;
 
   try {
-    const res = await apiFetch("/api/prospects/research", { company: prospect, person: document.getElementById("person-input")
+    const data = await apiFetch("/api/prospects/research", {
+      company: prospect,
+      depth: document.getElementById("filter-depth")?.value,
+      focus: document.getElementById("filter-focus")?.value
     });
-    const data = await res.json();
-    profile = data.profile || null;
+    profile = data?.profile || null;
   } catch {
     profile = null;
   }
@@ -42,7 +44,7 @@ async function runResearch(prospect) {
 }
 
 function renderProfile(p) {
-  document.getElementById("profile-card").innerHTML = `
+  document.getElementById("prospect-report").innerHTML = `
     <div class="profile-header">
       <div class="profile-logo">${p.name?.charAt(0) || "?"}</div>
       <div>
@@ -78,8 +80,8 @@ function renderProfile(p) {
         <ul class="signals-list">${(p.signals || []).map(s => `<li>${s}</li>`).join("") || "<li>No signals found</li>"}</ul>
       </div>
     </div>`;
-  document.getElementById("profile-section").classList.remove("hidden");
-  document.getElementById("profile-section").scrollIntoView({ behavior: "smooth" });
+  document.getElementById("results-panel").classList.remove("hidden");
+  document.getElementById("results-panel").scrollIntoView({ behavior: "smooth" });
 }
 
 document.getElementById("btn-export")?.addEventListener("click", () => {
@@ -96,9 +98,9 @@ document.getElementById("btn-save")?.addEventListener("click", async () => {
 });
 
 async function loadHistory() {
-  const items = await getFromFirestore("prospect-profiles");
   const grid = document.getElementById("history-grid");
-  if (!grid) return;
+  if (!grid) return; // no history UI on this page
+  const items = await getFromFirestore("prospect-profiles");
   document.getElementById("history-section").classList.remove("hidden");
   grid.innerHTML = items.length
     ? items.map(i => `<div class="result-card"><strong>${i.company || "Profile"}</strong><small>${i.createdAt?.toDate?.().toLocaleDateString?.() || "Recently"}</small></div>`).join("")
@@ -107,10 +109,10 @@ async function loadHistory() {
 
 // RONNA-MOCK-FALLBACK: never fabricate results when the scanner API is unavailable.
 function showUnavailable() {
-  const panel = document.getElementById("results-panel") || document.getElementById("results-section");
-  if (panel) {
-    panel.classList.remove("hidden");
-    panel.innerHTML = '<div class="empty-state" role="status"><p><strong>The scanner service is unavailable right now.</strong></p><p>No results were generated. Please try again later.</p></div>';
-  }
+  // Render into the report container so the Export/Save toolbar stays intact for a retry.
+  profile = null;
+  document.getElementById("results-panel")?.classList.remove("hidden");
+  const report = document.getElementById("prospect-report");
+  if (report) report.innerHTML = '<div class="empty-state" role="status"><p><strong>The scanner service is unavailable right now.</strong></p><p>No results were generated. Please try again later.</p></div>';
   toast.error("Scanner service unavailable. No results were generated.");
 }
