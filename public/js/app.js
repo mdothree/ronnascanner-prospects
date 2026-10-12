@@ -4,7 +4,7 @@ import { saveDoc, getUserDocs, tsToString } from "./services/firestoreService.js
 import { apiFetch } from "./config/env.js";
 import { toast } from "./utils/toast.js";
 import { gate } from "./services/paywallUI.js";
-import { downloadText, setLoading, formatNumber } from "./utils/helpers.js";
+import { downloadText, setLoading, formatNumber, escapeHtml } from "./utils/helpers.js";
 
 
 let results = [];
@@ -47,38 +47,38 @@ async function runResearch(prospect) {
 function renderProfile(p) {
   document.getElementById("prospect-report").innerHTML = `
     <div class="profile-header">
-      <div class="profile-logo">${p.name?.charAt(0) || "?"}</div>
+      <div class="profile-logo">${escapeHtml(p.name?.charAt?.(0) || "?")}</div>
       <div>
-        <h2 class="profile-name">${p.name}</h2>
-        <p class="profile-tagline">${p.tagline || ""}</p>
+        <h2 class="profile-name">${escapeHtml(p.name)}</h2>
+        <p class="profile-tagline">${escapeHtml(p.tagline)}</p>
         <div class="profile-tags">
-          ${(p.tags || []).map(t => `<span class="tag tag-blue">${t}</span>`).join("")}
+          ${(p.tags || []).map(t => `<span class="tag tag-blue">${escapeHtml(t)}</span>`).join("")}
         </div>
       </div>
     </div>
     <div class="profile-grid">
       <div class="profile-section"><h4>Overview</h4>
         <div class="profile-rows">
-          <div class="profile-row"><span>Industry</span><strong>${p.industry || "—"}</strong></div>
-          <div class="profile-row"><span>Founded</span><strong>${p.founded || "—"}</strong></div>
-          <div class="profile-row"><span>Employees</span><strong>${p.employees || "—"}</strong></div>
-          <div class="profile-row"><span>Revenue</span><strong>${p.revenue || "—"}</strong></div>
-          <div class="profile-row"><span>HQ</span><strong>${p.location || "—"}</strong></div>
-          <div class="profile-row"><span>Website</span><strong>${p.website || "—"}</strong></div>
+          <div class="profile-row"><span>Industry</span><strong>${escapeHtml(p.industry || "—")}</strong></div>
+          <div class="profile-row"><span>Founded</span><strong>${escapeHtml(p.founded || "—")}</strong></div>
+          <div class="profile-row"><span>Employees</span><strong>${escapeHtml(p.employees || "—")}</strong></div>
+          <div class="profile-row"><span>Revenue</span><strong>${escapeHtml(p.revenue || "—")}</strong></div>
+          <div class="profile-row"><span>HQ</span><strong>${escapeHtml(p.location || "—")}</strong></div>
+          <div class="profile-row"><span>Website</span><strong>${escapeHtml(p.website || "—")}</strong></div>
         </div>
       </div>
       <div class="profile-section"><h4>Tech Stack</h4>
-        <div class="tags-wrap">${(p.techStack || []).map(t => `<span class="tag tag-gray">${t}</span>`).join("") || "—"}</div>
+        <div class="tags-wrap">${(p.techStack || []).map(t => `<span class="tag tag-gray">${escapeHtml(t)}</span>`).join("") || "—"}</div>
       </div>
       <div class="profile-section"><h4>Funding</h4>
         <div class="profile-rows">
-          <div class="profile-row"><span>Stage</span><strong>${p.fundingStage || "—"}</strong></div>
-          <div class="profile-row"><span>Total</span><strong>${p.totalFunding || "—"}</strong></div>
-          <div class="profile-row"><span>Last Round</span><strong>${p.lastRound || "—"}</strong></div>
+          <div class="profile-row"><span>Stage</span><strong>${escapeHtml(p.fundingStage || "—")}</strong></div>
+          <div class="profile-row"><span>Total</span><strong>${escapeHtml(p.totalFunding || "—")}</strong></div>
+          <div class="profile-row"><span>Last Round</span><strong>${escapeHtml(p.lastRound || "—")}</strong></div>
         </div>
       </div>
       <div class="profile-section"><h4>Signals</h4>
-        <ul class="signals-list">${(p.signals || []).map(s => `<li>${s}</li>`).join("") || "<li>No signals found</li>"}</ul>
+        <ul class="signals-list">${(p.signals || []).map(s => `<li>${escapeHtml(s)}</li>`).join("") || "<li>No signals found</li>"}</ul>
       </div>
     </div>`;
   document.getElementById("results-panel").classList.remove("hidden");
@@ -104,7 +104,7 @@ async function loadHistory() {
   const items = await getFromFirestore("prospect-profiles");
   document.getElementById("history-section").classList.remove("hidden");
   grid.innerHTML = items.length
-    ? items.map(i => `<div class="result-card"><strong>${i.company || "Profile"}</strong><small>${i.createdAt?.toDate?.().toLocaleDateString?.() || "Recently"}</small></div>`).join("")
+    ? items.map(i => `<div class="result-card"><strong>${escapeHtml(i.company || "Profile")}</strong><small>${escapeHtml(i.createdAt?.toDate?.().toLocaleDateString?.() || "Recently")}</small></div>`).join("")
     : "<p class='empty-state'>No saved profiles yet.</p>";
 }
 
