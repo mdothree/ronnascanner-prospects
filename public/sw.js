@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "ronnascanner-prospects-v3";
+const CACHE_NAME = "ronnascanner-prospects-v4";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
