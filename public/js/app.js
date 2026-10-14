@@ -3,7 +3,7 @@ import { authService } from "./services/authService.js";
 import { saveDoc, getUserDocs, tsToString } from "./services/firestoreService.js";
 import { apiFetch } from "./config/env.js";
 import { toast } from "./utils/toast.js";
-import { gate } from "./services/paywallUI.js";
+import { gate, handleApiError } from "./services/paywallUI.js";
 import { downloadText, setLoading, formatNumber, escapeHtml } from "./utils/helpers.js";
 
 
@@ -27,6 +27,7 @@ async function runResearch(prospect) {
   document.querySelector(".btn-loader").classList.remove("hidden");
   document.getElementById("btn-research").disabled = true;
 
+  let failure = null;
   try {
     const data = await apiFetch("/api/prospects/research", {
       company: prospect,
@@ -34,11 +35,12 @@ async function runResearch(prospect) {
       focus: document.getElementById("filter-focus")?.value
     });
     profile = data?.profile || null;
-  } catch {
+  } catch (err) {
     profile = null;
+    failure = handleApiError(err, "research");
   }
 
-  if (profile) renderProfile(profile); else showUnavailable();
+  if (profile) renderProfile(profile); else showUnavailable(failure);
   document.querySelector(".btn-text").classList.remove("hidden");
   document.querySelector(".btn-loader").classList.add("hidden");
   document.getElementById("btn-research").disabled = false;
@@ -109,13 +111,16 @@ async function loadHistory() {
 }
 
 // RONNA-MOCK-FALLBACK: never fabricate results when the scanner API is unavailable.
-function showUnavailable() {
+// `failure` is handleApiError's { status, title, detail } (402 paywall, 501 not open, ...).
+function showUnavailable(failure) {
+  const title = failure?.title || "The scanner service is unavailable right now.";
+  const detail = failure?.detail || "No results were generated. Please try again later.";
   // Render into the report container so the Export/Save toolbar stays intact for a retry.
   profile = null;
   document.getElementById("results-panel")?.classList.remove("hidden");
   const report = document.getElementById("prospect-report");
-  if (report) report.innerHTML = '<div class="empty-state" role="status"><p><strong>The scanner service is unavailable right now.</strong></p><p>No results were generated. Please try again later.</p></div>';
-  toast.error("Scanner service unavailable. No results were generated.");
+  if (report) report.innerHTML = `<div class="empty-state" role="status"><p><strong>${escapeHtml(title)}</strong></p><p>${escapeHtml(detail)}</p></div>`;
+  toast.error(detail);
 }
 
 // RONNA-LOADLIST-AWAIT-BUG (same class on this sub): saveToFirestore / getFromFirestore
